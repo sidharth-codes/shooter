@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Shooter</string>
+    <string name="space_shooter">Space Shooter</string>
+    <string name="all_time_high_n_a">All-Time High: N/A</string>
+    <string name="recent_scores">Recent Scores:</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="start_game">Start Game</string>
+</resources>
