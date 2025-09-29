@@ -14,7 +14,7 @@
         android:text="@string/app_name_title"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="16dp"/>
 
     <TextView
         android:id="@+id/highScoreTextView"
@@ -36,15 +36,29 @@
         android:id="@+id/playerNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="48dp"
         android:autofillHints="name"
         android:hint="@string/enter_your_name"
         android:inputType="textPersonName"
         android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/startButton"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/start_game"/>
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/startButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="@string/start_game"/>
+
+        <Button
+            android:id="@+id/shopButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/shop_button"/>
+    </LinearLayout>
 
 </LinearLayout>

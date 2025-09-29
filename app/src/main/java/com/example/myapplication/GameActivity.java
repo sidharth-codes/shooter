@@ -17,7 +17,7 @@ public class GameActivity extends AppCompatActivity {
 
         String playerName = getIntent().getStringExtra("PLAYER_NAME");
         if (playerName == null || playerName.isEmpty()) {
-            playerName = "Player"; // Fallback name
+            playerName = "Player";
         }
 
         gameView = new GameView(this, playerName);
@@ -31,12 +31,16 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        gameView.pause();
+        if (gameView != null) {
+            gameView.pause();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        gameView.resume();
+        if (gameView != null) {
+            gameView.resume();
+        }
     }
 }

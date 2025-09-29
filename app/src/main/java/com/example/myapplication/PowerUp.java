@@ -19,7 +19,6 @@ public class PowerUp extends GameObject {
         y = -height;
         speed = 7;
 
-        // Randomly assign a type
         if (new Random().nextBoolean()) {
             type = PowerUpType.SHIELD;
         } else {
@@ -37,10 +36,7 @@ public class PowerUp extends GameObject {
     }
 
     public int getColor() {
-        if (type == PowerUpType.SHIELD) {
-            return Color.CYAN; // Shield power-ups are cyan
-        } else {
-            return Color.GREEN; // Rapid-fire power-ups are green
-        }
+        if (type == PowerUpType.SHIELD) return Color.CYAN;
+        else return Color.GREEN;
     }
 }

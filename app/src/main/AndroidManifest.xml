@@ -26,6 +26,10 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             tools:ignore="LockedOrientationActivity" />
+        <activity
+            android:name=".ShopActivity"
+            android:exported="false" />
     </application>
+
 
 </manifest>

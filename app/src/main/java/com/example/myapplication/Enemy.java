@@ -12,7 +12,7 @@ public class Enemy extends GameObject {
         speed = new Random().nextInt(10) + 5;
         x = new Random().nextInt(screenX - width);
         y = -height;
-        health = 1; // Default enemies have 1 health
+        health = 1;
     }
 
     @Override

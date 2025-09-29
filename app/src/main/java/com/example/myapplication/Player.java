@@ -8,61 +8,54 @@ public class Player extends GameObject {
 
     private final int screenX;
     private final int screenY;
-    private Bitmap bitmap; // <<< FIX: Removed 'final' keyword
+    private Bitmap bitmap;
     private int health;
-    private int coins;
-    private final int MAX_HEALTH = 3;
+    private final int maxHealth;
 
-    public Player(Context context, int screenX, int screenY) {
+    public Player(Context context, int screenX, int screenY, int maxHealthLevel) {
         this.screenX = screenX;
         this.screenY = screenY;
+        this.maxHealth = 2 + maxHealthLevel;
+
         width = 150;
         height = 150;
 
-        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.player_ship);
-        bitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+        this.bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.player_ship);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+        this.bitmap = scaledBitmap;
 
         reset();
     }
 
     @Override
     public void update() {
-        if (x < 0) {
-            x = 0;
-        }
-        if (x > screenX - width) {
-            x = screenX - width;
-        }
+        if (x < 0) x = 0;
+        if (x > screenX - width) x = screenX - width;
     }
 
     public void reset() {
         x = screenX / 2 - width / 2;
         y = screenY - 200;
-        health = MAX_HEALTH;
-        coins = 0;
+        health = this.maxHealth;
     }
 
     public void takeDamage(int damage) {
         this.health -= damage;
     }
 
-    public void addCoins(int amount) {
-        this.coins += amount;
-    }
-
     public void applyPowerUp(PowerUp.PowerUpType type) {
         if (type == PowerUp.PowerUpType.SHIELD) {
-            if (health < MAX_HEALTH) {
+            if (health < this.maxHealth) {
                 health++;
             }
         }
-        // RAPID_FIRE would be handled in GameView's shooting logic
     }
 
     public Bitmap getBitmap() {
         return bitmap;
     }
 
-    public int getHealth() { return health; }
-    public int getCoins() { return coins; }
+    public int getHealth() {
+        return health;
+    }
 }

@@ -35,17 +35,34 @@ public class MainActivity extends AppCompatActivity {
         recentScoresTextView = findViewById(R.id.recentScoresTextView);
         playerNameEditText = findViewById(R.id.playerNameEditText);
         Button startButton = findViewById(R.id.startButton);
+        Button shopButton = findViewById(R.id.shopButton);
 
         startButton.setOnClickListener(v -> {
-            String playerName = playerNameEditText.getText().toString().trim();
-            if (playerName.isEmpty()) {
-                Toast.makeText(this, R.string.please_enter_name, Toast.LENGTH_SHORT).show();
-                return;
+            String playerName = getPlayerName();
+            if (playerName != null) {
+                Intent intent = new Intent(MainActivity.this, GameActivity.class);
+                intent.putExtra("PLAYER_NAME", playerName);
+                startActivity(intent);
             }
-            Intent intent = new Intent(MainActivity.this, GameActivity.class);
-            intent.putExtra("PLAYER_NAME", playerName);
-            startActivity(intent);
         });
+
+        shopButton.setOnClickListener(v -> {
+            String playerName = getPlayerName();
+            if (playerName != null) {
+                Intent intent = new Intent(MainActivity.this, ShopActivity.class);
+                intent.putExtra("PLAYER_NAME", playerName);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private String getPlayerName() {
+        String playerName = playerNameEditText.getText().toString().trim();
+        if (playerName.isEmpty()) {
+            Toast.makeText(this, R.string.please_enter_name, Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        return playerName;
     }
 
     private void loadScores() {
@@ -62,7 +79,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 StringBuilder recentScoresTextBuilder = new StringBuilder();
-                recentScoresTextBuilder.append(getString(R.string.recent_scores)).append("\n");
+                if (!recentScores.isEmpty()) { // Only add header if there are scores
+                    recentScoresTextBuilder.append(getString(R.string.recent_scores)).append("\n");
+                }
 
                 if (recentScores.isEmpty()) {
                     recentScoresTextBuilder.append(getString(R.string.no_scores_yet));
@@ -79,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        playerNameEditText.setText(""); // Clear the player name input field
         loadScores();
     }
 }
