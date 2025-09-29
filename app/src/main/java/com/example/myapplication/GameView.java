@@ -12,7 +12,9 @@ import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.database.GameScore;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -28,6 +30,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private final Player player;
     private final List<Bullet> bullets;
     private final List<Enemy> enemies;
+    private final List<PowerUp> powerUps;
     private int score = 0;
     private boolean isGameOver = false;
     private final AppDatabase db;
@@ -53,11 +56,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         screenX = getResources().getDisplayMetrics().widthPixels;
         screenY = getResources().getDisplayMetrics().heightPixels;
         paint = new Paint();
-        player = new Player(screenX, screenY);
+        player = new Player(context, screenX, screenY); // <<< Pass context to Player
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
-        db = AppDatabase.getDatabase(getContext()); // Use getContext() for safety
+        powerUps = new ArrayList<>();
+
+        db = AppDatabase.getDatabase(getContext());
         executorService = Executors.newSingleThreadExecutor();
+
         backButton = new Rect(screenX - 250, 50, screenX - 50, 150);
     }
 
@@ -72,50 +78,121 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private void update() {
         if (isGameOver) return;
-        player.update();
-        List<Bullet> bulletsToRemove = new ArrayList<>();
-        for (Bullet bullet : bullets) {
-            bullet.update();
-            if (bullet.y < 0) bulletsToRemove.add(bullet);
-        }
-        bullets.removeAll(bulletsToRemove);
 
+        player.update();
+
+        // --- Safely update and remove bullets using an Iterator ---
+        Iterator<Bullet> bulletIterator = bullets.iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+            bullet.update();
+            if (bullet.getY() < 0) {
+                bulletIterator.remove();
+            }
+        }
+
+        // Spawn new enemies
         if (random.nextInt(100) < 5) {
             enemies.add(new Enemy(screenX, screenY));
         }
 
-        List<Enemy> enemiesToRemove = new ArrayList<>();
-        for (Enemy enemy : enemies) {
+        // Spawn new power-ups
+        if (random.nextInt(500) < 2) { // Power-ups are rarer
+            powerUps.add(new PowerUp(screenX, screenY));
+        }
+
+        // --- Safely update enemies and check for collisions with player ---
+        Iterator<Enemy> enemyIterator = enemies.iterator();
+        while (enemyIterator.hasNext()) {
+            Enemy enemy = enemyIterator.next();
             enemy.update();
-            if (enemy.y > screenY || Rect.intersects(player.getCollisionShape(), enemy.getCollisionShape())) {
-                isGameOver = true;
-                saveScore();
+
+            // Enemy hits player
+            if (Rect.intersects(player.getCollisionShape(), enemy.getCollisionShape())) {
+                player.takeDamage(1);
+                enemyIterator.remove(); // Safely remove enemy
+                if (player.getHealth() <= 0) {
+                    isGameOver = true;
+                    saveScore();
+                }
+                continue; // Skip to the next enemy
             }
-            for (Bullet bullet : bullets) {
-                if (Rect.intersects(enemy.getCollisionShape(), bullet.getCollisionShape())) {
-                    enemiesToRemove.add(enemy);
-                    bulletsToRemove.add(bullet);
-                    score += 10;
+
+            // Enemy goes off-screen
+            if (enemy.getY() > screenY) {
+                player.takeDamage(1);
+                enemyIterator.remove(); // Safely remove enemy
+                if (player.getHealth() <= 0) {
+                    isGameOver = true;
+                    saveScore();
                 }
             }
         }
-        enemies.removeAll(enemiesToRemove);
-        bullets.removeAll(bulletsToRemove);
+
+        // --- Safely check bullet-enemy collisions ---
+        bulletIterator = bullets.iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+            enemyIterator = enemies.iterator();
+            while (enemyIterator.hasNext()) {
+                Enemy enemy = enemyIterator.next();
+                if(Rect.intersects(bullet.getCollisionShape(), enemy.getCollisionShape())) {
+                    enemy.takeDamage(bullet.getDamage());
+                    bulletIterator.remove(); // Bullet is destroyed on hit
+                    if (enemy.getHealth() <= 0) {
+                        enemyIterator.remove(); // Enemy is destroyed
+                        score += 10;
+                        player.addCoins(1);
+                    }
+                    break; // Bullet hits one enemy and is removed, so break inner loop
+                }
+            }
+        }
+
+        // --- Safely update power-ups and check for player collision ---
+        Iterator<PowerUp> powerUpIterator = powerUps.iterator();
+        while (powerUpIterator.hasNext()) {
+            PowerUp powerUp = powerUpIterator.next();
+            powerUp.update();
+            if (Rect.intersects(player.getCollisionShape(), powerUp.getCollisionShape())) {
+                player.applyPowerUp(powerUp.getType());
+                powerUpIterator.remove();
+            } else if (powerUp.getY() > screenY) {
+                powerUpIterator.remove();
+            }
+        }
     }
+
 
     private void draw() {
         if (surfaceHolder.getSurface().isValid()) {
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas == null) return;
             canvas.drawColor(Color.BLACK);
-            canvas.drawBitmap(player.getBitmap(), player.x, player.y, paint);
+
+            // Draw Player
+            canvas.drawBitmap(player.getBitmap(), player.getX(), player.getY(), paint);
+
+            // Draw Enemies
             paint.setColor(Color.RED);
             for (Enemy enemy : enemies) canvas.drawRect(enemy.getCollisionShape(), paint);
+
+            // Draw Bullets
             paint.setColor(Color.YELLOW);
             for (Bullet bullet : bullets) canvas.drawRect(bullet.getCollisionShape(), paint);
+
+            // Draw PowerUps
+            for (PowerUp powerUp : powerUps) {
+                paint.setColor(powerUp.getColor());
+                canvas.drawRect(powerUp.getCollisionShape(), paint);
+            }
+
+            // Draw UI
             paint.setColor(Color.WHITE);
             paint.setTextSize(50);
             canvas.drawText("Score: " + score, 50, 100, paint);
+            canvas.drawText("Health: " + player.getHealth(), 50, 160, paint);
+            canvas.drawText("Coins: " + player.getCoins(), 50, 220, paint);
 
             if (!isGameOver) {
                 paint.setColor(Color.DKGRAY);
@@ -142,13 +219,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         try { Thread.sleep(17); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 
-    public void resume() {
-        // The game thread is now started in surfaceCreated
-    }
-
-    public void pause() {
-        // The game thread is now stopped in surfaceDestroyed
-    }
+    public void resume() {}
+    public void pause() {}
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
@@ -163,11 +235,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
         isPlaying = false;
-        try {
-            gameThread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        try { gameThread.join(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -182,12 +250,12 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                         goToMainMenu();
                         return true;
                     }
-                    bullets.add(new Bullet(player.x + (player.width / 2f), player.y));
+                    bullets.add(new Bullet(player.getX() + (player.getWidth() / 2f), player.getY()));
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (!isGameOver) {
-                    player.x = (int) event.getX() - player.width / 2;
+                    player.setX((int) event.getX() - player.getWidth() / 2);
                 }
                 break;
         }
@@ -212,10 +280,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     private void resetGame() {
-        player.x = screenX / 2 - player.width / 2;
-        player.y = screenY - 200;
+        player.reset();
         enemies.clear();
         bullets.clear();
+        powerUps.clear();
         score = 0;
         isGameOver = false;
     }

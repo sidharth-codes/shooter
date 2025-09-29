@@ -1,10 +1,10 @@
 package com.example.myapplication;
 
-import android.graphics.Rect;
 import java.util.Random;
 
-public class Enemy {
-    public int x, y, width, height, speed;
+public class Enemy extends GameObject {
+
+    private int health;
 
     public Enemy(int screenX, int screenY) {
         width = 80;
@@ -12,13 +12,19 @@ public class Enemy {
         speed = new Random().nextInt(10) + 5;
         x = new Random().nextInt(screenX - width);
         y = -height;
+        health = 1; // Default enemies have 1 health
     }
 
+    @Override
     public void update() {
         y += speed;
     }
 
-    public Rect getCollisionShape() {
-        return new Rect(x, y, x + width, y + height);
+    public void takeDamage(int damage) {
+        this.health -= damage;
+    }
+
+    public int getHealth() {
+        return health;
     }
 }

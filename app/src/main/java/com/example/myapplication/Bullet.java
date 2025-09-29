@@ -1,23 +1,24 @@
 package com.example.myapplication;
 
-import android.graphics.Rect;
+public class Bullet extends GameObject {
 
-public class Bullet {
-    public float x, y;
-    public final float width = 10f;
-    public final float height = 30f;
-    public final int speed = 40;
+    private final int damage;
 
     public Bullet(float x, float y) {
-        this.x = x - (width / 2);
-        this.y = y;
+        this.x = (int) (x - (10f / 2));
+        this.y = (int) y;
+        this.width = 10;
+        this.height = 30;
+        this.speed = 40;
+        this.damage = 1; // Each bullet does 1 damage
     }
 
+    @Override
     public void update() {
         y -= speed;
     }
 
-    public Rect getCollisionShape() {
-        return new Rect((int)x, (int)y, (int)(x + width), (int)(y + height));
+    public int getDamage() {
+        return damage;
     }
 }

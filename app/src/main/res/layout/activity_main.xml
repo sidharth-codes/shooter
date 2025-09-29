@@ -36,7 +36,7 @@
         android:id="@+id/playerNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android.autofillHints="name"
+        android:autofillHints="name"
         android:hint="@string/enter_your_name"
         android:inputType="textPersonName"
         android:layout_marginBottom="16dp"/>
