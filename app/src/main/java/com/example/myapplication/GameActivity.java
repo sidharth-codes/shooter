@@ -24,7 +24,6 @@ public class GameActivity extends AppCompatActivity {
         setContentView(gameView);
     }
 
-    // This method will be called by GameView to close the activity
     public void goToMainMenu() {
         finish();
     }

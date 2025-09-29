@@ -16,4 +16,3 @@ public interface GameScoreDao {
     @Query("SELECT * FROM scores ORDER BY id DESC LIMIT 10")
     List<GameScore> getRecentScores();
 }
-

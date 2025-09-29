@@ -18,8 +18,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@SuppressLint("ViewConstructor")
-public class GameView extends SurfaceView implements Runnable {
+public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
     private Thread gameThread;
     private boolean isPlaying;
@@ -42,21 +41,23 @@ public class GameView extends SurfaceView implements Runnable {
         this(context, null, playerName);
     }
 
+    @SuppressLint("ViewConstructor")
     public GameView(GameActivity context, AttributeSet attrs, String playerName) {
         super(context, attrs);
         this.gameActivity = context;
         this.playerName = playerName;
+
+        surfaceHolder = getHolder();
+        surfaceHolder.addCallback(this);
+
         screenX = getResources().getDisplayMetrics().widthPixels;
         screenY = getResources().getDisplayMetrics().heightPixels;
-        surfaceHolder = getHolder();
         paint = new Paint();
         player = new Player(screenX, screenY);
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
-        db = AppDatabase.getDatabase(context);
+        db = AppDatabase.getDatabase(getContext()); // Use getContext() for safety
         executorService = Executors.newSingleThreadExecutor();
-
-        // Initialize back button in the top-right corner
         backButton = new Rect(screenX - 250, 50, screenX - 50, 150);
     }
 
@@ -116,7 +117,6 @@ public class GameView extends SurfaceView implements Runnable {
             paint.setTextSize(50);
             canvas.drawText("Score: " + score, 50, 100, paint);
 
-            // Draw back button if the game is not over
             if (!isGameOver) {
                 paint.setColor(Color.DKGRAY);
                 canvas.drawRect(backButton, paint);
@@ -124,7 +124,7 @@ public class GameView extends SurfaceView implements Runnable {
                 paint.setTextSize(50);
                 paint.setTextAlign(Paint.Align.CENTER);
                 canvas.drawText("Back", backButton.centerX(), backButton.centerY() + 15, paint);
-                paint.setTextAlign(Paint.Align.LEFT); // Reset for score text
+                paint.setTextAlign(Paint.Align.LEFT);
             }
 
             if (isGameOver) {
@@ -132,7 +132,7 @@ public class GameView extends SurfaceView implements Runnable {
                 paint.setTextAlign(Paint.Align.CENTER);
                 canvas.drawText("GAME OVER", screenX / 2f, screenY / 2f, paint);
                 canvas.drawText("Tap to Retry", screenX / 2f, (screenY / 2f) + 120, paint);
-                paint.setTextAlign(Paint.Align.LEFT); // Reset alignment
+                paint.setTextAlign(Paint.Align.LEFT);
             }
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
@@ -143,14 +143,31 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     public void resume() {
+        // The game thread is now started in surfaceCreated
+    }
+
+    public void pause() {
+        // The game thread is now stopped in surfaceDestroyed
+    }
+
+    @Override
+    public void surfaceCreated(@NonNull SurfaceHolder holder) {
         isPlaying = true;
         gameThread = new Thread(this);
         gameThread.start();
     }
 
-    public void pause() {
+    @Override
+    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {}
+
+    @Override
+    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
         isPlaying = false;
-        try { gameThread.join(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        try {
+            gameThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -161,12 +178,10 @@ public class GameView extends SurfaceView implements Runnable {
                 if (isGameOver) {
                     resetGame();
                 } else {
-                    // Check if back button is pressed
                     if (backButton.contains((int) event.getX(), (int) event.getY())) {
-                        gameActivity.goToMainMenu();
-                        return true; // Event handled
+                        goToMainMenu();
+                        return true;
                     }
-                    // Otherwise, shoot a bullet
                     bullets.add(new Bullet(player.x + (player.width / 2f), player.y));
                 }
                 break;
@@ -179,14 +194,14 @@ public class GameView extends SurfaceView implements Runnable {
         return true;
     }
 
-    @Override
-    public boolean performClick() {
-        super.performClick();
-        return true;
+    private void goToMainMenu() {
+        if (gameActivity != null) {
+            gameActivity.goToMainMenu();
+        }
     }
 
     private void saveScore() {
-        if (score > 0) { // Only save if score is greater than 0
+        if (score > 0) {
             executorService.execute(() -> {
                 GameScore gameScore = new GameScore();
                 gameScore.playerName = this.playerName;

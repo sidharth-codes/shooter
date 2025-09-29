@@ -9,7 +9,7 @@ public class Bullet {
     public final int speed = 40;
 
     public Bullet(float x, float y) {
-        this.x = x - (width / 2); // Center the bullet on the x-coordinate
+        this.x = x - (width / 2);
         this.y = y;
     }
 
@@ -21,4 +21,3 @@ public class Bullet {
         return new Rect((int)x, (int)y, (int)(x + width), (int)(y + height));
     }
 }
-

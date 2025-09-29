@@ -39,15 +39,13 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(v -> {
             String playerName = playerNameEditText.getText().toString().trim();
             if (playerName.isEmpty()) {
-                Toast.makeText(this, "Please enter your name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.please_enter_name, Toast.LENGTH_SHORT).show();
                 return;
             }
             Intent intent = new Intent(MainActivity.this, GameActivity.class);
             intent.putExtra("PLAYER_NAME", playerName);
             startActivity(intent);
         });
-
-        loadScores();
     }
 
     private void loadScores() {
@@ -57,20 +55,23 @@ public class MainActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 if (highScore != null) {
-                    highScoreTextView.setText("All-Time High: " + highScore.playerName + " - " + highScore.score);
+                    String highScoreText = getString(R.string.high_score_format, highScore.playerName, highScore.score);
+                    highScoreTextView.setText(highScoreText);
                 } else {
-                    highScoreTextView.setText("All-Time High: N/A");
+                    highScoreTextView.setText(getString(R.string.all_time_high_n_a));
                 }
 
-                StringBuilder recentScoresText = new StringBuilder("Recent Scores:\n");
+                StringBuilder recentScoresTextBuilder = new StringBuilder();
+                recentScoresTextBuilder.append(getString(R.string.recent_scores)).append("\n");
+
                 if (recentScores.isEmpty()) {
-                    recentScoresText.append("No scores yet!");
+                    recentScoresTextBuilder.append(getString(R.string.no_scores_yet));
                 } else {
                     for (GameScore score : recentScores) {
-                        recentScoresText.append(score.playerName).append(": ").append(score.score).append("\n");
+                        recentScoresTextBuilder.append(getString(R.string.recent_score_line, score.playerName, score.score)).append("\n");
                     }
                 }
-                recentScoresTextView.setText(recentScoresText.toString());
+                recentScoresTextView.setText(recentScoresTextBuilder.toString());
             });
         });
     }

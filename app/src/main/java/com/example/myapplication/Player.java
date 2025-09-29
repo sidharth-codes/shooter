@@ -9,7 +9,7 @@ import android.graphics.Rect;
 public class Player {
     public int x, y, width, height;
     private final int screenX;
-    private Bitmap bitmap;
+    private final Bitmap bitmap;
 
     public Player(int screenX, int screenY) {
         this.screenX = screenX;
@@ -17,10 +17,7 @@ public class Player {
         height = 100;
         x = screenX / 2 - width / 2;
         y = screenY - 200;
-        createBitmap();
-    }
 
-    private void createBitmap() {
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
@@ -29,7 +26,6 @@ public class Player {
     }
 
     public void update() {
-        // Keep the player within the screen bounds
         if (x < 0) {
             x = 0;
         }
